@@ -12,6 +12,9 @@ require 'spruce/title_report'
 
 module Spruce
   class << self
-    attr_accessor :base_url, :spruce_api_key
+    attr_accessor :spruce_base_url,
+                  :spruce_api_key,
+                  :spruce_environment,
+                  :lender_id
   end
 end
