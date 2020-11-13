@@ -2,7 +2,9 @@
 require 'rest-client'
 require 'json'
 require 'logger'
-require 'jwt'
+require 'pry'
+
+module Spruce::Client::Error < ::StandardError; end
 
 module Spruce
   class Client
@@ -51,12 +53,41 @@ module Spruce
             timeout: 10,
             url: @url
           )
-          parsed_response = JSON.parse(response.body)
+
+          response_code = response.code
+
+          # TODO : Return response message with response payload
+          if response_code.eql?(201) || response_code.eql?(212)
+            binding.pry
+            JSON.parse(response.body)
+          end
+
+          if response_code.eql?(400)
+            raise Spruce::Client::Error.new('Bad Request')
+          end
+
+          if response_code.eql?(404)
+            raise Spruce::Client::Error.new('Not Found')
+          end
+
+          if response_code.eql?(413)
+            raise Spruce::Client::Error.new('Payload too Large')
+          end
+
+          if response_code.eql?(409)
+            raise Spruce::Client::Error.new('Request already submitted')
+          end
         end
+      rescue Spruce::Client => e
+        logger = Logger.new(STDERR)
+        logger.error(e)
+        binding.pry
+        # TODO : Check response here
+        { message: e }
       rescue RestClient::NotFound,
              RestClient::ExceptionWithResponse,
              Errno::EHOSTDOWN => e
-        logger ||= Logger.new(STDERR)
+        logger = Logger.new(STDERR)
         logger.error(e)
 
         false
