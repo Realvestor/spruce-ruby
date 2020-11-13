@@ -32,20 +32,24 @@ module Spruce
       begin
         if block_given?
           @path = yield
-          @base_url = ENV['SPRUCE_URL'] || Spruce.base_url
           @api_key = ENV['SPRUCE_API_KEY'] || Spruce.spruce_api_key
+          @environment = (ENV['SPRUCE_ENVIRONMENT'] || Spruce.spruce_environment).to_s
+          @lender_id = ENV['SPRUCE_LENDER_ID'] || Spruce.spruce_lender_id
+          @base_url = ENV['SPRUCE_URL'] || Spruce.base_url
           @url = "#{@base_url}#{@path}"
 
-          payload = { data: @api_key }
-          token = JWT.encode payload, nil, 'none'
-          @headers = @headers.merge({ 'Authorization': "Bearer #{token}" })
+          @headers = @headers.merge({ 'Authorization': "Bearer #{@api_key}" })
+
+          if @environment.eql?('sandbox')
+            @payload.merge!({ "lender_id": @lender_id })
+          end
 
           response = RestClient::Request.execute(
             headers: @headers,
             method: @method,
             payload: @payload.to_json,
             timeout: 10,
-            url: @url,
+            url: @url
           )
           parsed_response = JSON.parse(response.body)
         end
