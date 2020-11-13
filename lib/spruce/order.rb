@@ -465,7 +465,7 @@ module Spruce
     #     }
     #   ]
     # }
-    def self.get_order(order_id:, payload:, headers: {})
+    def self.get_order(order_id:, payload: {}, headers: {})
       request_handler do
         @payload = payload
         @headers = headers

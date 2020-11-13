@@ -4,8 +4,6 @@ require 'json'
 require 'logger'
 require 'pry'
 
-module Spruce::Client::Error < ::StandardError; end
-
 module Spruce
   class Client
     # Orders can have the following order_status:
@@ -37,7 +35,7 @@ module Spruce
           @api_key = ENV['SPRUCE_API_KEY'] || Spruce.spruce_api_key
           @environment = (ENV['SPRUCE_ENVIRONMENT'] || Spruce.spruce_environment).to_s
           @lender_id = ENV['SPRUCE_LENDER_ID'] || Spruce.spruce_lender_id
-          @base_url = ENV['SPRUCE_URL'] || Spruce.base_url
+          @base_url = ENV['SPRUCE_URL'] || Spruce.spruce_base_url
           @url = "#{@base_url}#{@path}"
 
           @headers = @headers.merge({ 'Authorization': "Bearer #{@api_key}" })
@@ -56,9 +54,7 @@ module Spruce
 
           response_code = response.code
 
-          # TODO : Return response message with response payload
           if response_code.eql?(201) || response_code.eql?(212)
-            binding.pry
             JSON.parse(response.body)
           end
 
@@ -78,20 +74,22 @@ module Spruce
             raise Spruce::Client::Error.new('Request already submitted')
           end
         end
-      rescue Spruce::Client => e
-        logger = Logger.new(STDERR)
-        logger.error(e)
-        binding.pry
-        # TODO : Check response here
-        { message: e }
+      rescue Spruce::Client::Error => e
+        Spruce::Client.log_error_message(e)
       rescue RestClient::NotFound,
              RestClient::ExceptionWithResponse,
              Errno::EHOSTDOWN => e
-        logger = Logger.new(STDERR)
-        logger.error(e)
-
-        false
+        Spruce::Client.log_error_message(e)
       end
+    end
+
+    def self.log_error_message(e)
+      logger = Logger.new(STDERR)
+      response = { message: e.message }
+      logger.error(e)
+      response
     end
   end
 end
+
+class Spruce::Client::Error < StandardError; end
