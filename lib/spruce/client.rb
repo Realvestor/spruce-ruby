@@ -1,8 +1,6 @@
-# require 'pry'
 require 'rest-client'
 require 'json'
 require 'logger'
-require 'pry'
 
 module Spruce
   class Client
@@ -55,7 +53,7 @@ module Spruce
           response_code = response.code
 
           if response_code.eql?(201) || response_code.eql?(212)
-            JSON.parse(response.body)
+            return JSON.parse(response.body)
           end
 
           if response_code.eql?(400)
